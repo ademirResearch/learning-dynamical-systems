@@ -7,23 +7,40 @@ class DynamicSystemDataGenerator:
         self.system = system
         pass
 
-    def get_data_generator(self, samples=1000, ts=0.01, delay=2, batch_size=1):
+    def get_data_generator(self, samples=1000, ts=0.01, delay=2, batch_size=1, state="all"):
         """
         Data generator that produces training data from a dynamic system of equations
         :param samples (int):    Number of points for each state variable
         :param ts (float):       Sampling time
         :param delay (int):      Time delay (Lag time)
         :param batch_size (int): Batch size
+        :param state (string):   All states or specific
         return: raw dataset
         """
         u_vector = np.zeros((samples, self.system.num_inputs))
         y_vector = np.zeros((samples, self.system.num_states))
         for i in range(samples):
-            x0 = np.random.uniform(-10, 10, self.system.num_states)
-            u = np.random.uniform(-10, 10, self.system.num_inputs)
-            sample = self.system.step(num_steps=1, ts=ts, x0=x0, u=u)
+            x0 = np.random.uniform(-1, 1, self.system.num_states)
+            u = np.random.uniform(-1, 1, self.system.num_inputs)
+            sample = self.system.step(num_steps=10, ts=ts, x0=x0, u=u)
             u_vector[i] = u
             y_vector[i] = sample
+
+        # Remove unwanted states if any
+        if state == "all":
+            pass
+        else:
+            state = int(state)
+            y_vector = y_vector[:, state].reshape(-1, 1)
+
+        # Normalize data
+        u_mean = np.mean(u_vector)
+        u_std = np.std(u_vector)
+        y_mean = np.mean(y_vector)
+        y_std = np.std(y_vector)
+
+        u_vector = (u_vector - u_mean) / u_std
+        y_vector = (y_vector - y_mean) / y_std
 
         # Autoregressive data
         u_vector, y_vector = self._construct_regression_vector(u_vector, y_vector, delay=delay)
@@ -49,6 +66,8 @@ class DynamicSystemDataGenerator:
             # Fill with zeroes or Initial conditions TODO
             _aux_u[0] = 0
             new_u = np.hstack((new_u, _aux_u))
+        # Remove u_vector from new_u (Not lagged version)
+        new_u = np.delete(new_u, 0, axis=1)
 
         for _ in range(delay):
             # Roll Y vector 

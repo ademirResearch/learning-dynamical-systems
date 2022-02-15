@@ -5,6 +5,8 @@ import tensorflow as tf
 class ModelClass:
     def __init__(self, **kwargs) -> None:
         self._udelay = kwargs.pop("u_delay")
+        self._num_states = kwargs.pop("num_states")
+        self._num_features = kwargs["num_features"]
         self.model = self._generate_model(**kwargs)
         pass
 
@@ -33,26 +35,27 @@ class ModelClass:
         if x0 is None:
             x0 = 0 # TODO
         # Construct u
-        u = np.zeros(self._udelay + 1) 
+        u = np.zeros(self._udelay) 
         u[0] = 1.0
         # Construct y
-        y = np.ones(3 + 2*self._udelay - 1)
-        for _ in range(3):
+        y = np.ones(self._num_states*self._udelay)
+        for _ in range(self._num_states):
                 y[_] = x0[_]
         # Construct to nn
         nn_input = np.concatenate((u, y))
-        # Reshape
-        # nn_input = nn_input.reshape(-1, self._udelay, 1)
-
-        final_result = np.zeros((num_steps, 3))
+        
+        final_result = np.zeros((num_steps, self._num_states))
         for step in range(num_steps):
-            y_hat = self.model(nn_input.reshape(-1, 1, 9))
+            y_hat = self.model(nn_input.reshape(-1, 1, self._num_features))
             # Update nn_input with feedback
-            y = np.roll(y, 3, axis=0)
+            y = np.roll(y, self._num_states, axis=0)
             u = np.roll(u, 1, axis=0)
             u[0] = 1.0
-            for _ in range(3):
-                y[_] = tf.squeeze(y_hat)[_]
+            for _ in range(self._num_states):
+                if self._num_states == 1:
+                    y[_] = tf.squeeze(y_hat)
+                else:
+                    y[_] = tf.squeeze(y_hat)[_]
             nn_input = np.concatenate((u, y))
             final_result[step] =  tf.squeeze(y_hat)
         return final_result

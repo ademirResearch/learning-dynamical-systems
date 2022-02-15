@@ -10,6 +10,6 @@ class MLP(ModelClass):
     def _generate_model(num_inputs=1, num_features=1):
         model = Sequential()
         model.add(Dense(1024, activation='tanh', input_shape=(num_inputs, num_features)))
-        model.add(Dense(3))
+        model.add(Dense(1))
         model.compile(optimizer='adam', loss='mse')
         return model
