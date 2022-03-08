@@ -25,3 +25,15 @@ class Lorenz(System):
         dy = x * (rho - z) - y
         dz = x * y - beta * z
         return [dx, dy, dz]
+
+
+class FirstOrder(System):
+    def __init__(self) -> None:
+        super().__init__()
+        self.num_inputs = 1
+        self.num_states = 1
+
+    @staticmethod
+    def _dynamics(x, t, u):
+        dx = -0.5*x + u
+        return dx

@@ -1,15 +1,16 @@
 from model_class import ModelClass
 from keras.models import Sequential, Model
-from keras.layers import Input, Dense
+from keras.layers import Input, Dense, BatchNormalization, Dropout
 
 class MLP(ModelClass):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
-    @staticmethod
-    def _generate_model(num_inputs=1, num_features=1):
+    def _model(self, num_inputs=1, num_features=1):
         model = Sequential()
-        model.add(Dense(1024, activation='tanh', input_shape=(num_inputs, num_features)))
+        model.add(Dense(512, activation='tanh', input_shape=(num_features,)))
+        model.add(Dropout(0.2))
+        model.add(Dense(128, activation='tanh'))
+        model.add(Dropout(0.2))
         model.add(Dense(1))
-        model.compile(optimizer='adam', loss='mse')
         return model

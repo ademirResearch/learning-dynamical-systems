@@ -1,4 +1,3 @@
-from re import S
 import numpy as np
 from scipy.integrate import odeint
 
@@ -12,8 +11,24 @@ class System:
     def _dynamics(x, t, u):
         return
 
-    def simulation(self, simulation_time=1.0, ts=0.01):
-        return
+    def experiment(self, u, x0, ts=0.01):
+        """Simulates the dynamic system's output from a given input signal u
+        Args:
+            u (_type_): Input signal
+            x0 (_type_): Initial condition, state vector at t_0
+            ts (float, optional): Sampling time. Defaults to 0.01.
+        Returns:
+            ndarray: System's response 
+        """
+        samples = len(u)
+        experiment_result = np.zeros((samples, self.num_states))
+        t0 = 0
+        for i in range(samples):
+            result_states = odeint(self._dynamics, y0=x0, t=[t0, t0 + ts], args=(u[i],))
+            x0 = result_states[-1]
+            experiment_result[i] = result_states[-1]
+            t0 = ts
+        return experiment_result
 
     def step(self, num_steps=1, ts=0.01, x0=None, u=1.0):
         """
